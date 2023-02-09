@@ -1,0 +1,136 @@
+#!/bin/sh
+
+set -eu
+export LC_ALL=C
+
+PLUGIN=${0##*/docker-}
+HELPER_IMAGE='docker.io/hectorm/volumex-helper:v0'
+
+if [ "${1-}" = 'docker-cli-plugin-metadata' ]; then
+	cat <<-'EOF'
+		{
+			"SchemaVersion": "0.1.0",
+			"Vendor": "@hectorm",
+			"Version": "0.0.1",
+			"ShortDescription": "Extra functionalities to manage volumes",
+			"URL": "https://github.com/hectorm/docker-volumex"
+		}
+	EOF
+	exit 0
+fi
+
+if [ "${1-}" = "${PLUGIN:?}" ]; then
+	shift
+fi
+
+main() {
+	ACTION=${1-}
+
+	if [ -z "${ACTION-}" ] || [ "${ACTION:?}" = 'help' ]; then
+		printf '%s\n' "$(cat <<-EOF
+			Usage: docker ${PLUGIN:?} COMMAND
+
+			Extra functionalities to manage volumes
+
+			Commands:
+			  explore  Explore a volume
+			  backup   Backup a volume
+			  restore  Restore a volume
+		EOF
+		)"
+		exit 0
+	fi
+
+	if [ "${ACTION:?}" = 'explore' ]; then
+		VOLUME=${2-}
+
+		if [ -z "${VOLUME-}" ]; then
+			printf '%s\n' "$(cat <<-EOF
+				Usage: docker ${PLUGIN:?} ${ACTION:?} VOLUME
+
+				Explore a volume
+			EOF
+			)"
+			exit 1
+		fi
+
+		if ! docker volume ls -f name="${VOLUME:?}" --format '{{.Name}}' | grep -Fxq "${VOLUME:?}"; then
+			printf '%s\n' "No such volume: ${VOLUME:?}" >&2
+			exit 1
+		fi
+
+		exec docker run --rm --log-driver none \
+			--mount type=volume,src="${VOLUME:?}",dst=/mnt/volume/ --workdir /mnt/volume/ \
+			--tty --interactive --attach STDIN --attach STDOUT --attach STDERR \
+			"${HELPER_IMAGE:?}" sh
+	fi
+
+	if [ "${ACTION:?}" = 'backup' ]; then
+		VOLUME=${2-}
+		FILE=${3-${VOLUME-}.tzst}
+
+		if [ -z "${VOLUME-}" ] || [ -z "${FILE-}" ]; then
+			printf '%s\n' "$(cat <<-EOF
+				Usage: docker ${PLUGIN:?} ${ACTION:?} VOLUME [FILE]
+
+				Backup a volume
+			EOF
+			)"
+			exit 1
+		fi
+
+		if ! docker volume ls -f name="${VOLUME:?}" --format '{{.Name}}' | grep -Fxq "${VOLUME:?}"; then
+			printf '%s\n' "No such volume: ${VOLUME:?}" >&2
+			exit 1
+		fi
+
+		exec docker run --rm --log-driver none --network none \
+			--mount type=volume,src="${VOLUME:?}",dst=/mnt/volume/,ro --workdir /mnt/volume/ \
+			--attach STDOUT --attach STDERR \
+			"${HELPER_IMAGE:?}" sh -euc "$(cat <<-'EOF'
+				tar \
+					--checkpoint=100000 --checkpoint-action=echo='%{}T' --totals \
+					--preserve-permissions --acls --xattrs --numeric-owner --sort=name \
+					--format=posix --pax-option=exthdr.name=%d/PaxHeaders/%f,atime:=0,ctime:=0 \
+					--create --file=- --directory ./ . | zstd -T0 -1
+			EOF
+			)" > "${FILE:?}"
+	fi
+
+	if [ "${ACTION:?}" = 'restore' ]; then
+		VOLUME=${2-}
+		FILE=${3-${VOLUME-}.tzst}
+
+		if [ -z "${VOLUME-}" ] || [ -z "${FILE-}" ]; then
+			printf '%s\n' "$(cat <<-EOF
+				Usage: docker ${PLUGIN:?} ${ACTION:?} VOLUME [FILE]
+
+				Restore a volume
+			EOF
+			)"
+			exit 1
+		fi
+
+		if [ ! -e "${FILE:?}" ]; then
+			printf '%s\n' "No such file: ${FILE:?}" >&2
+			exit 1
+		fi
+
+		exec docker run --rm --log-driver none --network none \
+			--mount type=volume,src="${VOLUME:?}",dst=/mnt/volume/ --workdir /mnt/volume/ \
+			--interactive --attach STDIN --attach STDERR \
+			"${HELPER_IMAGE:?}" sh -euc "$(cat <<-'EOF'
+				rm -rf ./* ./.[!.]* ./..?*;
+				zstd -dc | tar \
+					--checkpoint=100000 --checkpoint-action=echo='%{}T' --totals \
+					--preserve-permissions --acls --xattrs --same-owner \
+					--extract --file=- --directory ./
+			EOF
+			)" < "${FILE:?}"
+	fi
+
+	printf '%s\n' "Unknown action: ${ACTION:?}" >&2
+	exit 1
+}
+
+main "${@-}"
