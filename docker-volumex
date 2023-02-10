@@ -92,7 +92,7 @@ main() {
 					--checkpoint=100000 --checkpoint-action=echo='%{}T' --totals \
 					--preserve-permissions --acls --xattrs --numeric-owner --sort=name \
 					--format=posix --pax-option=exthdr.name=%d/PaxHeaders/%f,atime:=0,ctime:=0 \
-					--create --file=- --directory ./ . | zstd -T0 -1
+					--create --file=- --directory ./ . | zstd -T0
 			EOF
 			)" > "${FILE:?}"
 	fi
