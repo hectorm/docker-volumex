@@ -4,14 +4,14 @@ set -eu
 export LC_ALL=C
 
 PLUGIN=${0##*/docker-}
-HELPER_IMAGE='docker.io/hectorm/volumex-helper:v0'
+HELPER_IMAGE='docker.io/hectorm/volumex-helper:v1'
 
 if [ "${1-}" = 'docker-cli-plugin-metadata' ]; then
 	cat <<-'EOF'
 		{
 			"SchemaVersion": "0.1.0",
 			"Vendor": "@hectorm",
-			"Version": "0.0.1",
+			"Version": "1.0.0",
 			"ShortDescription": "Extra functionalities to manage volumes",
 			"URL": "https://github.com/hectorm/docker-volumex"
 		}
