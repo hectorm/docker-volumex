@@ -40,8 +40,6 @@ jobs:
             docker.io/hectorm/volumex-helper
           tags: |
             type=ref,event=branch
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}.{{minor}}
             type=semver,pattern=v{{major}}
       - name: 'Build and push'
         uses: 'docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671'
