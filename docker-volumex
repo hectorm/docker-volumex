@@ -54,12 +54,12 @@ main() {
 			exit 1
 		fi
 
-		if ! docker volume ls -f name="${VOLUME:?}" --format '{{.Name}}' | grep -Fxq "${VOLUME:?}"; then
+		if ! docker volume ls --format '{{.Name}}' --filter name="${VOLUME:?}" | grep -Fxq "${VOLUME:?}"; then
 			printf '%s\n' "No such volume: ${VOLUME:?}" >&2
 			exit 1
 		fi
 
-		exec docker run --rm --log-driver none \
+		exec docker container run --rm --log-driver none \
 			--mount type=volume,src="${VOLUME:?}",dst=/mnt/volume/ --workdir /mnt/volume/ \
 			--tty --interactive --attach STDIN --attach STDOUT --attach STDERR \
 			"${HELPER_IMAGE:?}" sh
@@ -79,12 +79,12 @@ main() {
 			exit 1
 		fi
 
-		if ! docker volume ls -f name="${VOLUME:?}" --format '{{.Name}}' | grep -Fxq "${VOLUME:?}"; then
+		if ! docker volume ls --format '{{.Name}}' --filter name="${VOLUME:?}" | grep -Fxq "${VOLUME:?}"; then
 			printf '%s\n' "No such volume: ${VOLUME:?}" >&2
 			exit 1
 		fi
 
-		exec docker run --rm --log-driver none --network none \
+		exec docker container run --rm --log-driver none --network none \
 			--mount type=volume,src="${VOLUME:?}",dst=/mnt/volume/,ro --workdir /mnt/volume/ \
 			--attach STDOUT --attach STDERR \
 			"${HELPER_IMAGE:?}" sh -euc "$(cat <<-'EOF'
@@ -116,7 +116,7 @@ main() {
 			exit 1
 		fi
 
-		exec docker run --rm --log-driver none --network none \
+		exec docker container run --rm --log-driver none --network none \
 			--mount type=volume,src="${VOLUME:?}",dst=/mnt/volume/ --workdir /mnt/volume/ \
 			--interactive --attach STDIN --attach STDERR \
 			"${HELPER_IMAGE:?}" sh -euc "$(cat <<-'EOF'
