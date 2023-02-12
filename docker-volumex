@@ -11,7 +11,7 @@ if [ "${1-}" = 'docker-cli-plugin-metadata' ]; then
 		{
 			"SchemaVersion": "0.1.0",
 			"Vendor": "@hectorm",
-			"Version": "1.0.1",
+			"Version": "1.0.2",
 			"ShortDescription": "Extra functionalities to manage volumes",
 			"URL": "https://github.com/hectorm/docker-volumex"
 		}

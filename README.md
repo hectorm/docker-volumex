@@ -8,7 +8,7 @@ Extra functionalities to manage volumes.
 
 ```sh
 mkdir -p ~/.docker/cli-plugins/
-curl --proto '=https' --tlsv1.3 -o ~/.docker/cli-plugins/docker-volumex 'https://raw.githubusercontent.com/hectorm/docker-volumex/master/docker-volumex'
+curl --proto '=https' --tlsv1.3 -o ~/.docker/cli-plugins/docker-volumex 'https://raw.githubusercontent.com/hectorm/docker-volumex/v1.0.2/docker-volumex'
 chmod +x ~/.docker/cli-plugins/docker-volumex
 ```
 
@@ -16,7 +16,7 @@ chmod +x ~/.docker/cli-plugins/docker-volumex
 
 ```sh
 sudo mkdir -p /usr/local/lib/docker/cli-plugins/
-sudo curl --proto '=https' --tlsv1.3 -o /usr/local/lib/docker/cli-plugins/docker-volumex 'https://raw.githubusercontent.com/hectorm/docker-volumex/master/docker-volumex'
+sudo curl --proto '=https' --tlsv1.3 -o /usr/local/lib/docker/cli-plugins/docker-volumex 'https://raw.githubusercontent.com/hectorm/docker-volumex/v1.0.2/docker-volumex'
 sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-volumex
 ```
 
