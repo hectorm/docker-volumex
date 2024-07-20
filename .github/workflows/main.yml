@@ -1,66 +1,66 @@
-name: 'Main'
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Main"
 
 on:
   push:
-    tags: ['*']
-    branches: ['*']
+    tags: ["*"]
+    branches: ["*"]
   pull_request:
-    branches: ['*']
+    branches: ["*"]
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
-
   build-push-docker:
-    name: 'Build and push Docker images'
-    runs-on: 'ubuntu-latest'
+    name: "Build and push Docker images"
+    runs-on: "ubuntu-latest"
     permissions:
-      contents: 'read'
-      packages: 'write'
+      contents: "read"
+      packages: "write"
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332'
-      - name: 'Set up QEMU'
-        uses: 'docker/setup-qemu-action@5927c834f5b4fdf503fca6f4c7eccda82949e1ee'
-      - name: 'Set up Docker Buildx'
-        uses: 'docker/setup-buildx-action@4fd812986e6c8c2a69e18311145f9371337f27d4'
-      - name: 'Login to Docker Hub'
+      - name: "Checkout"
+        uses: "actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332"
+      - name: "Set up QEMU"
+        uses: "docker/setup-qemu-action@5927c834f5b4fdf503fca6f4c7eccda82949e1ee"
+      - name: "Set up Docker Buildx"
+        uses: "docker/setup-buildx-action@4fd812986e6c8c2a69e18311145f9371337f27d4"
+      - name: "Login to Docker Hub"
         if: "github.event_name != 'pull_request'"
-        uses: 'docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446'
+        uses: "docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446"
         with:
-          registry: 'docker.io'
-          username: '${{ secrets.DOCKERHUB_USERNAME }}'
-          password: '${{ secrets.DOCKERHUB_TOKEN }}'
-      - name: 'Extract metadata'
-        id: 'meta'
-        uses: 'docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81'
+          registry: "docker.io"
+          username: "${{ secrets.DOCKERHUB_USERNAME }}"
+          password: "${{ secrets.DOCKERHUB_TOKEN }}"
+      - name: "Extract metadata"
+        id: "meta"
+        uses: "docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81"
         with:
           images: |
             docker.io/hectorm/volumex-helper
           tags: |
             type=ref,event=branch
             type=semver,pattern=v{{major}}
-      - name: 'Build and push'
-        uses: 'docker/build-push-action@1a162644f9a7e87d8f4b053101d1d9a712edc18c'
+      - name: "Build and push"
+        uses: "docker/build-push-action@1a162644f9a7e87d8f4b053101d1d9a712edc18c"
         with:
-          context: './'
-          platforms: 'linux/amd64,linux/arm64/v8,linux/arm/v7,linux/arm/v6,linux/ppc64le,linux/s390x'
-          tags: '${{ steps.meta.outputs.tags }}'
-          labels: '${{ steps.meta.outputs.labels }}'
+          context: "./"
+          platforms: "linux/amd64,linux/arm64/v8,linux/arm/v7,linux/arm/v6,linux/ppc64le,linux/s390x"
+          tags: "${{ steps.meta.outputs.tags }}"
+          labels: "${{ steps.meta.outputs.labels }}"
           push: "${{ github.event_name != 'pull_request' }}"
 
   release-github:
-    name: 'Create GitHub release'
+    name: "Create GitHub release"
     if: "startsWith(github.ref, 'refs/tags/v')"
-    needs: ['build-push-docker']
-    runs-on: 'ubuntu-latest'
+    needs: ["build-push-docker"]
+    runs-on: "ubuntu-latest"
     permissions:
-      contents: 'write'
+      contents: "write"
     steps:
-      - name: 'Create release'
+      - name: "Create release"
         env:
-          GITHUB_PAT: '${{ secrets.GITHUB_TOKEN }}'
+          GITHUB_PAT: "${{ secrets.GITHUB_TOKEN }}"
         run: |
           RELEASE_STATUS="$(curl -fs --proto '=https' --tlsv1.3 --globoff \
             --url "https://api.github.com/repos/${GITHUB_REPOSITORY:?}/releases/tags/${GITHUB_REF_NAME:?}" \
